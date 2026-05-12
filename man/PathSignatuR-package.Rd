@@ -4,16 +4,16 @@
 \name{PathSignatuR-package}
 \alias{PathSignatuR}
 \alias{PathSignatuR-package}
-\title{PathSignatuR: What the Package Does (One Line, Title Case)}
+\title{PathSignatuR: Path Signatures in R}
 \description{
-What the package does (one paragraph).
+Truncated path signatures (exact piecewise-linear) for multi-dimensional discrete paths. Provides an Rcpp kernel based on segment-wise tensor exponentials and Chen products, a pure-R reference for verification, time augmentation, and word enumeration utilities aligned with standard signature conventions.
 }
 \author{
-\strong{Maintainer}: First Last \email{first.last@example.com}
+\strong{Maintainer}: Simon Mitterhofer \email{smh@quanticfinancial.com}
 
 Authors:
 \itemize{
-  \item First Last \email{first.last@example.com}
+  \item Simon Mitterhofer \email{smh@quanticfinancial.com}
 }
 
 }

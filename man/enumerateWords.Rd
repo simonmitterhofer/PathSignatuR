@@ -2,7 +2,7 @@
 % Please edit documentation in R/enumerateWords.R
 \name{enumerateWords}
 \alias{enumerateWords}
-\title{Enumerate all multi-indices over the alphabet {1, ..., d}}
+\title{Enumerate all multi-indices over an alphabet of size d}
 \usage{
 enumerateWords(dim, depth)
 }

@@ -1,4 +1,4 @@
-#' Enumerate all multi-indices over the alphabet {1, ..., d}
+#' Enumerate all multi-indices over an alphabet of size d
 #'
 #' Generates the list of words used to index the truncated signature, in the
 #' canonical level-major, lexicographic-within-level ordering: empty word

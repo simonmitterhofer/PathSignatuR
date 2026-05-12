@@ -1,9 +1,9 @@
 #' Pure-R reference signature implementation
 #'
 #' Exact piecewise-linear signature via segment-wise tensor exponentials
-#' and Chen products. For a path X with increments delta_1, ..., delta_{T-1}:
+#' and Chen products. For a path X with increments delta_1, ..., delta_(T-1):
 #'
-#'   S(X) = exp(delta_1) (x) exp(delta_2) (x) ... (x) exp(delta_{T-1})
+#'   S(X) = exp(delta_1) (x) exp(delta_2) (x) ... (x) exp(delta_(T-1))
 #'
 #' where exp() is the truncated tensor exponential and (x) is the truncated
 #' tensor product. Bitwise exact for piecewise-linear paths; closed forms
