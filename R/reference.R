@@ -1,11 +1,15 @@
 #' Pure-R reference signature implementation
 #'
-#' Mirrors the parent-index recurrence literally: builds the full
-#' path-valued signature `T x p` via the Stratonovich midpoint rule, then
-#' returns its terminal row. Used in tests to verify the C++ kernel.
+#' Exact piecewise-linear signature via segment-wise tensor exponentials
+#' and Chen products. For a path X with increments delta_1, ..., delta_{T-1}:
 #'
-#' Intentionally written for clarity (matches the parent-index formula
-#' one-for-one), not speed. Not exported.
+#'   S(X) = exp(delta_1) (x) exp(delta_2) (x) ... (x) exp(delta_{T-1})
+#'
+#' where exp() is the truncated tensor exponential and (x) is the truncated
+#' tensor product. Bitwise exact for piecewise-linear paths; closed forms
+#' like (b - a)^k / k! are recovered to machine precision.
+#'
+#' Used in tests as the comparison baseline for the C++ kernel.
 #'
 #' @param X     numeric vector or matrix (T x d)
 #' @param depth non-negative integer
@@ -14,37 +18,63 @@
 #'
 #' @keywords internal
 .signatureRef <- function(X, depth) {
-  # --- validate --------------------------------------------------------
-  if (is.null(X)) stop("`X` must not be NULL")
-  if (is.data.frame(X)) X <- as.matrix(X)
-  if (is.vector(X) && !is.list(X)) X <- matrix(X, ncol = 1L)
-  if (!is.matrix(X) || !is.numeric(X)) {
-    stop("`X` must be a numeric vector or matrix (T x d)")
-  }
-  if (nrow(X) < 1L || ncol(X) < 1L) {
-    stop("`X` must have at least one row and one column")
-  }
-  if (any(!is.finite(X))) stop("`X` must contain only finite values")
-  if (length(depth) != 1L || !is.numeric(depth) || depth < 0 ||
-      depth != trunc(depth) || !is.finite(depth)) {
-    stop("`depth` must be a non-negative integer")
-  }
-  dimnames(X) <- NULL
-  depth <- as.integer(depth)
-
-  # --- compute ---------------------------------------------------------
+  # --- validate ---
+  X <- .validatePath(X)
+  N <- .validateDepth(depth)
   tLen <- nrow(X); d <- ncol(X)
-  nWords <- as.integer(sum(as.double(d) ^ (0:depth)))
-  sig <- matrix(0, tLen, nWords)
-  sig[, 1L] <- 1
-  if (depth == 0L || tLen < 2L) return(sig[tLen, ])
+  nWords <- as.integer(sum(as.double(d) ^ (0:N)))
 
-  inc <- diff(X)
-  for (w in 2:nWords) {
-    parentCol <- ((w - 2L) %/% d) + 1L
-    letter    <- ((w - 2L) %%  d) + 1L
-    mid <- (sig[-tLen, parentCol] + sig[-1L, parentCol]) / 2
-    sig[, w] <- c(0, cumsum(mid * inc[, letter]))
+  # Identity tensor (1, 0, 0, ...).
+  S <- numeric(nWords); S[1L] <- 1
+  if (N == 0L || tLen < 2L) return(S)
+
+  # --- precompute split table for the Chen product ----------------------
+  # splitTable[[w]] is a (|w|+1) x 2 integer matrix; row (j+1) holds the
+  # flat positions of (prefix of length j, suffix of length |w|-j).
+  words <- enumerateWords(d, N)
+
+  wordPos <- function(letters) {
+    k <- length(letters)
+    if (k == 0L) return(1L)
+    if (d == 1L) return(k + 1L)
+    cumLevel <- (d^k - 1L) %/% (d - 1L)      # 1 + d + ... + d^{k-1}
+    as.integer(cumLevel + 1L + sum((letters - 1L) * d^((k - 1L):0L)))
   }
-  sig[tLen, ]
+
+  splitTable <- lapply(words, function(word) {
+    k <- length(word)
+    if (k == 0L) return(matrix(c(1L, 1L), nrow = 1L))
+    out <- matrix(0L, nrow = k + 1L, ncol = 2L)
+    for (j in 0:k) {
+      pre <- if (j == 0L) integer(0) else word[1:j]
+      suf <- if (j == k) integer(0) else word[(j + 1L):k]
+      out[j + 1L, ] <- c(wordPos(pre), wordPos(suf))
+    }
+    out
+  })
+
+  # --- main loop: S := S (x) exp(delta_i) for each segment --------------
+  inc <- diff(X)
+  for (i in seq_len(tLen - 1L)) {
+    delta <- inc[i, ]
+
+    # exp(delta) via parent recurrence: E[w of length k] = E[parent] * delta[last] / k
+    # (so the level-k term is delta^{(x)k} / k!).
+    E <- numeric(nWords); E[1L] <- 1
+    for (w in 2:nWords) {
+      parentCol <- ((w - 2L) %/% d) + 1L
+      letter    <- ((w - 2L) %%  d) + 1L
+      k         <- length(words[[w]])
+      E[w] <- E[parentCol] * delta[letter] / k
+    }
+
+    # Chen product: newS[w] = sum over splits S[prefix] * E[suffix].
+    newS <- numeric(nWords)
+    for (w in seq_len(nWords)) {
+      st <- splitTable[[w]]
+      newS[w] <- sum(S[st[, 1L]] * E[st[, 2L]])
+    }
+    S <- newS
+  }
+  S
 }
