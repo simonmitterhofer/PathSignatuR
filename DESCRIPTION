@@ -1,6 +1,6 @@
 Package: PathSignatuR
 Title: Path Signatures in R
-Version: 0.1.0
+Version: 0.1.0.9000
 Authors@R: 
     person("Simon", "Mitterhofer", , "smh@quanticfinancial.com", role = c("aut", "cre"))
 Description: Truncated path signatures (exact piecewise-linear) for
