@@ -2,6 +2,8 @@
 
 export(enumerateWords)
 export(signature)
+export(signatureBatch)
+export(signaturePath)
 export(timeAugment)
 importFrom(Rcpp,sourceCpp)
 useDynLib(PathSignatuR, .registration = TRUE)

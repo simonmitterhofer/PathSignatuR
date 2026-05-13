@@ -34,7 +34,7 @@
 #' expected <- (x[50] - x[1])^(0:4) / factorial(0:4)
 #' all.equal(unname(s), expected)
 #'
-#' @seealso [enumerateWords()]
+#' @seealso [enumerateWords()], [signatureBatch()], [signaturePath()]
 #' @export
 signature <- function(X, depth, includeLevelZero = TRUE, sep = ",") {
   X     <- .validatePath(X)

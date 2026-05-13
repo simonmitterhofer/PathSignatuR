@@ -41,6 +41,23 @@ signature(timeAugment(X), depth = 2)
 enumerateWords(dim = 2, depth = 2)
 ```
 
+## Batch and path-valued variants
+
+```r
+   # Many paths at once — precompute is shared across the batch
+   paths <- list(
+     a = matrix(rnorm(40), 20, 2),
+     b = matrix(rnorm(60), 30, 2),
+     c = matrix(rnorm(50), 25, 2)
+   )
+   signatureBatch(paths, depth = 2)         # 3 x 7 matrix, row names a/b/c
+
+   # Running signature at every time step
+   sp <- signaturePath(X, depth = 2)        # T x 7 matrix
+   sp[1, ]                                  # identity (1, 0, ..., 0)
+   sp[nrow(sp), ]                           # same as signature(X, 2)
+```
+
 ## Conventions
 
 - **Path layout.** `X` is a `T x d` numeric matrix: rows are ordered

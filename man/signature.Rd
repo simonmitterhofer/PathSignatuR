@@ -52,5 +52,5 @@ all.equal(unname(s), expected)
 
 }
 \seealso{
-\code{\link[=enumerateWords]{enumerateWords()}}
+\code{\link[=enumerateWords]{enumerateWords()}}, \code{\link[=signatureBatch]{signatureBatch()}}, \code{\link[=signaturePath]{signaturePath()}}
 }
