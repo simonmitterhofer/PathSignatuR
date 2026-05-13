@@ -22,9 +22,35 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// sig_batch_cpp
+NumericMatrix sig_batch_cpp(const List& paths, int N);
+RcppExport SEXP _PathSignatuR_sig_batch_cpp(SEXP pathsSEXP, SEXP NSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const List& >::type paths(pathsSEXP);
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    rcpp_result_gen = Rcpp::wrap(sig_batch_cpp(paths, N));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sig_path_cpp
+NumericMatrix sig_path_cpp(const NumericMatrix& path, int N);
+RcppExport SEXP _PathSignatuR_sig_path_cpp(SEXP pathSEXP, SEXP NSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type path(pathSEXP);
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    rcpp_result_gen = Rcpp::wrap(sig_path_cpp(path, N));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_PathSignatuR_sig_terminal_cpp", (DL_FUNC) &_PathSignatuR_sig_terminal_cpp, 2},
+    {"_PathSignatuR_sig_batch_cpp", (DL_FUNC) &_PathSignatuR_sig_batch_cpp, 2},
+    {"_PathSignatuR_sig_path_cpp", (DL_FUNC) &_PathSignatuR_sig_path_cpp, 2},
     {NULL, NULL, 0}
 };
 

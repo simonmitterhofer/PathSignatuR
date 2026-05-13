@@ -2,6 +2,14 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 sig_terminal_cpp <- function(path, N) {
-    .Call('_PathSignatuR_sig_terminal_cpp', PACKAGE = 'PathSignatuR', path, N)
+    .Call(`_PathSignatuR_sig_terminal_cpp`, path, N)
+}
+
+sig_batch_cpp <- function(paths, N) {
+    .Call(`_PathSignatuR_sig_batch_cpp`, paths, N)
+}
+
+sig_path_cpp <- function(path, N) {
+    .Call(`_PathSignatuR_sig_path_cpp`, path, N)
 }
 
