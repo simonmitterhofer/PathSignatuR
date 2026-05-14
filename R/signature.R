@@ -42,7 +42,8 @@ signature <- function(X, depth, includeLevelZero = TRUE, sep = ",") {
   .validateSignatureOptions(sep, includeLevelZero)
 
   d   <- ncol(X)
-  out <- sig_terminal_cpp(X, depth)
+  ws  <- .getWorkspace(d, depth)
+  out <- sig_terminal_cpp(X, ws)
   names(out) <- .wordNames(d, depth, sep = sep)
   if (!includeLevelZero) out <- out[-1L]
   out

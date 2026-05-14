@@ -47,29 +47,10 @@ logSignature <- function(X, depth, includeLevelZero = TRUE, sep = ",") {
   depth <- .validateDepth(depth)
   .validateSignatureOptions(sep, includeLevelZero)
 
-  d <- ncol(X)
-  s <- unname(signature(X, depth = depth))
-  L <- length(s)
-
-  if (depth == 0L) {
-    out <- 0
-    names(out) <- ""
-    if (!includeLevelZero) out <- out[-1L]
-    return(out)
-  }
-
-  # b = S - e (zero level-0).
-  b <- s; b[1L] <- 0
-
-  result  <- numeric(L)
-  current <- c(1, rep(0, L - 1))   # b^{(x) 0} = e
-  sgn <- -1
-  for (k in seq_len(depth)) {
-    current <- unname(tensorProduct(current, b, depth))
-    sgn <- -sgn                     # +1 for k=1, -1 for k=2, ...
-    result <- result + sgn * current / k
-  }
-  names(result) <- .wordNames(d, depth, sep = sep)
-  if (!includeLevelZero) result <- result[-1L]
-  result
+  d   <- ncol(X)
+  ws  <- .getWorkspace(d, depth)
+  out <- log_sig_terminal_cpp(X, ws)
+  names(out) <- .wordNames(d, depth, sep = sep)
+  if (!includeLevelZero) out <- out[-1L]
+  out
 }

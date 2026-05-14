@@ -11,38 +11,62 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // sig_terminal_cpp
-NumericVector sig_terminal_cpp(const NumericMatrix& path, int N);
-RcppExport SEXP _PathSignatuR_sig_terminal_cpp(SEXP pathSEXP, SEXP NSEXP) {
+NumericVector sig_terminal_cpp(const NumericMatrix& path, SEXP ws_xptr);
+RcppExport SEXP _PathSignatuR_sig_terminal_cpp(SEXP pathSEXP, SEXP ws_xptrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const NumericMatrix& >::type path(pathSEXP);
-    Rcpp::traits::input_parameter< int >::type N(NSEXP);
-    rcpp_result_gen = Rcpp::wrap(sig_terminal_cpp(path, N));
+    Rcpp::traits::input_parameter< SEXP >::type ws_xptr(ws_xptrSEXP);
+    rcpp_result_gen = Rcpp::wrap(sig_terminal_cpp(path, ws_xptr));
     return rcpp_result_gen;
 END_RCPP
 }
 // sig_batch_cpp
-NumericMatrix sig_batch_cpp(const List& paths, int N);
-RcppExport SEXP _PathSignatuR_sig_batch_cpp(SEXP pathsSEXP, SEXP NSEXP) {
+NumericMatrix sig_batch_cpp(const List& paths, SEXP ws_xptr);
+RcppExport SEXP _PathSignatuR_sig_batch_cpp(SEXP pathsSEXP, SEXP ws_xptrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const List& >::type paths(pathsSEXP);
-    Rcpp::traits::input_parameter< int >::type N(NSEXP);
-    rcpp_result_gen = Rcpp::wrap(sig_batch_cpp(paths, N));
+    Rcpp::traits::input_parameter< SEXP >::type ws_xptr(ws_xptrSEXP);
+    rcpp_result_gen = Rcpp::wrap(sig_batch_cpp(paths, ws_xptr));
     return rcpp_result_gen;
 END_RCPP
 }
 // sig_path_cpp
-NumericMatrix sig_path_cpp(const NumericMatrix& path, int N);
-RcppExport SEXP _PathSignatuR_sig_path_cpp(SEXP pathSEXP, SEXP NSEXP) {
+NumericMatrix sig_path_cpp(const NumericMatrix& path, SEXP ws_xptr);
+RcppExport SEXP _PathSignatuR_sig_path_cpp(SEXP pathSEXP, SEXP ws_xptrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const NumericMatrix& >::type path(pathSEXP);
-    Rcpp::traits::input_parameter< int >::type N(NSEXP);
-    rcpp_result_gen = Rcpp::wrap(sig_path_cpp(path, N));
+    Rcpp::traits::input_parameter< SEXP >::type ws_xptr(ws_xptrSEXP);
+    rcpp_result_gen = Rcpp::wrap(sig_path_cpp(path, ws_xptr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// log_sig_path_cpp
+NumericMatrix log_sig_path_cpp(const NumericMatrix& path, SEXP ws_xptr);
+RcppExport SEXP _PathSignatuR_log_sig_path_cpp(SEXP pathSEXP, SEXP ws_xptrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type path(pathSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type ws_xptr(ws_xptrSEXP);
+    rcpp_result_gen = Rcpp::wrap(log_sig_path_cpp(path, ws_xptr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// log_sig_terminal_cpp
+NumericVector log_sig_terminal_cpp(const NumericMatrix& path, SEXP ws_xptr);
+RcppExport SEXP _PathSignatuR_log_sig_terminal_cpp(SEXP pathSEXP, SEXP ws_xptrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type path(pathSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type ws_xptr(ws_xptrSEXP);
+    rcpp_result_gen = Rcpp::wrap(log_sig_terminal_cpp(path, ws_xptr));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -101,6 +125,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_PathSignatuR_sig_terminal_cpp", (DL_FUNC) &_PathSignatuR_sig_terminal_cpp, 2},
     {"_PathSignatuR_sig_batch_cpp", (DL_FUNC) &_PathSignatuR_sig_batch_cpp, 2},
     {"_PathSignatuR_sig_path_cpp", (DL_FUNC) &_PathSignatuR_sig_path_cpp, 2},
+    {"_PathSignatuR_log_sig_path_cpp", (DL_FUNC) &_PathSignatuR_log_sig_path_cpp, 2},
+    {"_PathSignatuR_log_sig_terminal_cpp", (DL_FUNC) &_PathSignatuR_log_sig_terminal_cpp, 2},
     {"_PathSignatuR_build_sig_workspace", (DL_FUNC) &_PathSignatuR_build_sig_workspace, 2},
     {"_PathSignatuR_tensor_product_cpp", (DL_FUNC) &_PathSignatuR_tensor_product_cpp, 3},
     {"_PathSignatuR_build_shuffle_workspace", (DL_FUNC) &_PathSignatuR_build_shuffle_workspace, 2},

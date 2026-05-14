@@ -47,7 +47,8 @@ signatureBatch <- function(X, depth, includeLevelZero = TRUE, sep = ",") {
     }
   }
 
-  out <- sig_batch_cpp(paths, depth)
+  ws  <- .getWorkspace(d, depth)
+  out <- sig_batch_cpp(paths, ws)
   colnames(out) <- .wordNames(d, depth, sep = sep)
   if (!is.null(pathNames)) rownames(out) <- pathNames
   if (!includeLevelZero) out <- out[, -1L, drop = FALSE]

@@ -168,48 +168,41 @@ static void run_path_terminal(
 // =====================================================================
 
 // [[Rcpp::export]]
-NumericVector sig_terminal_cpp(const NumericMatrix& path, int N) {
+NumericVector sig_terminal_cpp(const NumericMatrix& path, SEXP ws_xptr) {
+  Rcpp::XPtr<SigWorkspace> ws(ws_xptr);
   const int T = path.nrow();
   const int d = path.ncol();
   if (T < 1) Rcpp::stop("path must have at least one row");
-  if (d < 1) Rcpp::stop("path must have at least one column");
-  if (N < 0) Rcpp::stop("depth must be non-negative");
+  if (d != ws->d) {
+    Rcpp::stop("path ncol %d does not match workspace d %d", d, ws->d);
+  }
 
-  auto ws = make_workspace(d, N);
-  NumericVector out(ws.nWords);
+  NumericVector out(ws->nWords);
   out[0] = 1.0;
-  if (N == 0 || T < 2) return out;
+  if (ws->N == 0 || T < 2) return out;
 
-  std::vector<double> S(ws.nWords), E(ws.nWords), newS(ws.nWords);
-  run_path_terminal(path, ws, S, E, newS);
-  for (int w = 0; w < ws.nWords; ++w) out[w] = S[w];
+  std::vector<double> S(ws->nWords), E(ws->nWords), newS(ws->nWords);
+  run_path_terminal(path, *ws, S, E, newS);
+  for (int w = 0; w < ws->nWords; ++w) out[w] = S[w];
   return out;
 }
 
 // =====================================================================
 // Exported: sig_batch_cpp -- many paths sharing (d, N).
-//
-// Paths come in as a List of NumericMatrix; all must have the same d
-// (R wrapper validates). T may vary. Output is nPaths x nWords; row i
-// is the terminal signature of paths[[i]].
 // =====================================================================
 
 // [[Rcpp::export]]
-NumericMatrix sig_batch_cpp(const List& paths, int N) {
+NumericMatrix sig_batch_cpp(const List& paths, SEXP ws_xptr) {
+  Rcpp::XPtr<SigWorkspace> ws(ws_xptr);
   const int nPaths = paths.size();
   if (nPaths < 1) Rcpp::stop("paths must contain at least one path");
 
-  NumericMatrix first = paths[0];
-  const int d = first.ncol();
-  if (d < 1) Rcpp::stop("paths must have at least one column");
-  if (N < 0) Rcpp::stop("depth must be non-negative");
-
-  auto ws = make_workspace(d, N);
-  NumericMatrix out(nPaths, ws.nWords);
+  const int d = ws->d;
+  NumericMatrix out(nPaths, ws->nWords);
   for (int i = 0; i < nPaths; ++i) out(i, 0) = 1.0;
-  if (N == 0) return out;
+  if (ws->N == 0) return out;
 
-  std::vector<double> S(ws.nWords), E(ws.nWords), newS(ws.nWords);
+  std::vector<double> S(ws->nWords), E(ws->nWords), newS(ws->nWords);
   for (int i = 0; i < nPaths; ++i) {
     NumericMatrix path = paths[i];
     if (path.ncol() != d) {
@@ -217,39 +210,144 @@ NumericMatrix sig_batch_cpp(const List& paths, int N) {
                  i + 1, path.ncol(), d);
     }
     if (path.nrow() < 2) continue;
-    run_path_terminal(path, ws, S, E, newS);
-    for (int w = 0; w < ws.nWords; ++w) out(i, w) = S[w];
+    run_path_terminal(path, *ws, S, E, newS);
+    for (int w = 0; w < ws->nWords; ++w) out(i, w) = S[w];
   }
   return out;
 }
 
 // =====================================================================
 // Exported: sig_path_cpp -- signature at every time step.
-//
-// Returns a T x nWords matrix. Row t is the signature of the path
-// restricted to [1, t+1]. Row 0 is the identity; row T-1 is terminal.
 // =====================================================================
 
 // [[Rcpp::export]]
-NumericMatrix sig_path_cpp(const NumericMatrix& path, int N) {
+NumericMatrix sig_path_cpp(const NumericMatrix& path, SEXP ws_xptr) {
+  Rcpp::XPtr<SigWorkspace> ws(ws_xptr);
   const int T = path.nrow();
   const int d = path.ncol();
   if (T < 1) Rcpp::stop("path must have at least one row");
-  if (d < 1) Rcpp::stop("path must have at least one column");
-  if (N < 0) Rcpp::stop("depth must be non-negative");
+  if (d != ws->d) {
+    Rcpp::stop("path ncol %d does not match workspace d %d", d, ws->d);
+  }
 
-  auto ws = make_workspace(d, N);
-  NumericMatrix out(T, ws.nWords);
+  const int nWords = ws->nWords;
+  NumericMatrix out(T, nWords);
   for (int t = 0; t < T; ++t) out(t, 0) = 1.0;
-  if (N == 0 || T < 2) return out;
+  if (ws->N == 0 || T < 2) return out;
 
-  std::vector<double> S(ws.nWords, 0.0), E(ws.nWords, 0.0), newS(ws.nWords, 0.0);
+  std::vector<double> S(nWords, 0.0), E(nWords, 0.0), newS(nWords, 0.0);
   S[0] = 1.0;
   for (int t = 0; t < T - 1; ++t) {
-    compute_segment_exp(path, t, ws, E);
-    chen_product(S, E, ws, newS);
+    compute_segment_exp(path, t, *ws, E);
+    chen_product(S, E, *ws, newS);
     S.swap(newS);
-    for (int w = 0; w < ws.nWords; ++w) out(t + 1, w) = S[w];
+    for (int w = 0; w < nWords; ++w) out(t + 1, w) = S[w];
+  }
+  return out;
+}
+
+// =====================================================================
+// Exported: log_sig_path_cpp -- log-signature at every time step.
+//
+// Row t (1-indexed: t = 1..T) holds the log-signature of X[1:t, ].
+// Row 1 is zero (log of identity). The kernel maintains the running
+// signature S and, after each Chen update, expands log(S) via the
+// truncated Neumann series
+//   log(S) = sum_{k = 1}^{N} (-1)^{k+1} (S - e)^{(x) k} / k.
+// Reuses chen_product over the same SigWorkspace; no separate setup.
+// =====================================================================
+
+// [[Rcpp::export]]
+NumericMatrix log_sig_path_cpp(const NumericMatrix& path, SEXP ws_xptr) {
+  Rcpp::XPtr<SigWorkspace> ws(ws_xptr);
+  const int T = path.nrow();
+  const int d = path.ncol();
+  if (T < 1) Rcpp::stop("path must have at least one row");
+  if (d != ws->d) {
+    Rcpp::stop("path ncol %d does not match workspace d %d", d, ws->d);
+  }
+
+  const int N      = ws->N;
+  const int nWords = ws->nWords;
+
+  NumericMatrix out(T, nWords);   // zero-initialised: row 1 stays zero.
+  if (N == 0 || T < 2) return out;
+
+  std::vector<double> S(nWords, 0.0), E(nWords, 0.0), newS(nWords, 0.0);
+  S[0] = 1.0;
+
+  std::vector<double> b(nWords), current(nWords), nextCurrent(nWords);
+
+  for (int t = 0; t < T - 1; ++t) {
+    // 1) Advance the running signature.
+    compute_segment_exp(path, t, *ws, E);
+    chen_product(S, E, *ws, newS);
+    S.swap(newS);
+
+    // 2) log(S) via the truncated Neumann series, into row t + 1.
+    for (int w = 0; w < nWords; ++w) b[w] = S[w];
+    b[0] = 0.0;                          // b = S - e
+
+    std::fill(current.begin(), current.end(), 0.0);
+    current[0] = 1.0;                    // (S - e)^{(x) 0} = e
+
+    double sgn = -1.0;
+    for (int k = 1; k <= N; ++k) {
+      chen_product(current, b, *ws, nextCurrent);
+      current.swap(nextCurrent);
+      sgn = -sgn;                        // +1 for k=1, -1 for k=2, ...
+      const double coeff = sgn / k;
+      double* outRow = &out(t + 1, 0);
+      const int stride = T;              // Rcpp matrices are column-major
+      for (int w = 0; w < nWords; ++w) outRow[w * stride] += coeff * current[w];
+    }
+  }
+  return out;
+}
+
+// =====================================================================
+// Exported: log_sig_terminal_cpp -- log-signature of one path, terminal.
+//
+// Runs the segment-wise signature loop once to obtain S, then expands
+// log(S) = sum_{k=1}^{N} (-1)^{k+1} (S - e)^{(x) k} / k. Same workspace
+// as the signature kernels.
+// =====================================================================
+
+// [[Rcpp::export]]
+NumericVector log_sig_terminal_cpp(const NumericMatrix& path, SEXP ws_xptr) {
+  Rcpp::XPtr<SigWorkspace> ws(ws_xptr);
+  const int T = path.nrow();
+  const int d = path.ncol();
+  if (T < 1) Rcpp::stop("path must have at least one row");
+  if (d != ws->d) {
+    Rcpp::stop("path ncol %d does not match workspace d %d", d, ws->d);
+  }
+
+  const int N      = ws->N;
+  const int nWords = ws->nWords;
+
+  NumericVector out(nWords);          // zero-initialised
+  if (N == 0 || T < 2) return out;
+
+  // Running signature.
+  std::vector<double> S(nWords), E(nWords), newS(nWords);
+  run_path_terminal(path, *ws, S, E, newS);
+
+  // log(S) via truncated Neumann series.
+  std::vector<double> b(nWords), current(nWords), nextCurrent(nWords);
+  for (int w = 0; w < nWords; ++w) b[w] = S[w];
+  b[0] = 0.0;                          // b = S - e
+
+  std::fill(current.begin(), current.end(), 0.0);
+  current[0] = 1.0;                    // (S - e)^{(x) 0} = e
+
+  double sgn = -1.0;
+  for (int k = 1; k <= N; ++k) {
+    chen_product(current, b, *ws, nextCurrent);
+    current.swap(nextCurrent);
+    sgn = -sgn;                        // +1 for k=1, -1 for k=2, ...
+    const double coeff = sgn / k;
+    for (int w = 0; w < nWords; ++w) out[w] += coeff * current[w];
   }
   return out;
 }

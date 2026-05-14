@@ -33,7 +33,8 @@ signaturePath <- function(X, depth, includeLevelZero = TRUE, sep = ",") {
   .validateSignatureOptions(sep, includeLevelZero)
 
   d   <- ncol(X)
-  out <- sig_path_cpp(X, depth)
+  ws  <- .getWorkspace(d, depth)
+  out <- sig_path_cpp(X, ws)
   colnames(out) <- .wordNames(d, depth, sep = sep)
   if (!includeLevelZero) out <- out[, -1L, drop = FALSE]
   out
