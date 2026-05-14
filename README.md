@@ -105,6 +105,21 @@ sRev <- tensorInverse(s1, depth = 3)     # == signature(X1 reversed)
 shuffleProduct(s1, s2, depth = 3)
 ```
 
+## Log-signatures
+
+```r
+# Log-signature: formal log of the signature in the tensor algebra
+ls <- logSignature(X, depth = 3)
+
+# Linear path: only level-1 entries are nonzero (equal to the increment)
+logSignature(seq(0, 2, length.out = 50), depth = 4)
+```
+
+The log-signature lies in the free Lie algebra of rank `d` -- a strict
+subspace of the truncated tensor algebra -- and the returned vector
+represents it in canonical word order, so entries are not independent.
+Projection onto a Hall or Lyndon basis is a v0.6+ concern.
+
 ## Conventions
 
 - **Path layout.** `X` is a `T x d` numeric matrix: rows are ordered
@@ -138,7 +153,7 @@ signature(x, depth = 4)
 
 ## Roadmap
 
-- v0.5: `logSignature()`
+- v0.6+: Hall / Lyndon basis projection for log-signatures
 - v1.0: stable API freeze
 
 ## License

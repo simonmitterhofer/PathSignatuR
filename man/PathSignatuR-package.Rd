@@ -6,7 +6,7 @@
 \alias{PathSignatuR-package}
 \title{PathSignatuR: Path Signatures in R}
 \description{
-Truncated path signatures (exact piecewise-linear) for multi-dimensional discrete paths. Provides an Rcpp kernel based on segment-wise tensor exponentials and Chen products, a pure-R reference for verification, path transforms (time augmentation, basepoint augmentation, lead-lag, interpolation), tensor algebra primitives (tensor product, tensor inverse, shuffle product, Chen product), and word enumeration utilities aligned with standard signature conventions.
+Truncated path signatures (exact piecewise-linear) for multi-dimensional discrete paths. Provides an Rcpp kernel based on segment-wise tensor exponentials and Chen products, a pure-R reference for verification, path transforms (time augmentation, basepoint augmentation, lead-lag, interpolation), tensor algebra primitives (tensor product, tensor inverse, shuffle product, Chen product), log-signatures, and word enumeration utilities aligned with standard signature conventions.
 }
 \author{
 \strong{Maintainer}: Simon Mitterhofer \email{smh@quanticfinancial.com}

@@ -163,3 +163,25 @@
   }
   out
 }
+
+#' Pure-R reference truncated tensor exponential.
+#'
+#' `exp(a)` = sum over `k` from 0 to `N` of `a^(x k) / k!`. Used in tests.
+#'
+#' @keywords internal
+.tensorExpRef <- function(a, depth) {
+  N <- .validateDepth(depth)
+  if (!is.numeric(a)) stop("`a` must be numeric")
+  if (any(!is.finite(a))) stop("`a` must contain only finite values")
+  L <- length(a)
+  d <- .inferDim(L, N)
+
+  result  <- c(1, rep(0, L - 1))
+  current <- result
+  if (N == 0L) return(result)
+  for (k in seq_len(N)) {
+    current <- unname(tensorProduct(current, unname(as.numeric(a)), N))
+    result  <- result + current / factorial(k)
+  }
+  result
+}
