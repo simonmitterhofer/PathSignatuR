@@ -83,6 +83,28 @@ pathInterpolate(X, n = 50)
 pathInterpolate(X, at = c(0, 0.25, 0.5, 0.75, 1))
 ```
 
+## Tensor algebra primitives
+
+Operations on truncated tensor algebra elements (vectors of length
+`sum(d^(0:depth))` in `enumerateWords` order). Inputs and outputs are
+all named numeric vectors. The C++ kernel caches `(d, depth)`-dependent
+workspaces across calls.
+
+```r
+# Signatures concatenate via the tensor / Chen product
+s1 <- signature(X[1:15, ], depth = 3)
+s2 <- signature(X[15:30, ], depth = 3)
+tensorProduct(s1, s2, depth = 3)         # == signature(X, depth = 3)
+chenProduct(s1, s2, depth = 3)           # named alias for clarity
+
+# Reverse path: tensor inverse
+sRev <- tensorInverse(s1, depth = 3)     # == signature(X1 reversed)
+
+# Shuffle product encodes the algebraic relations between signature
+# coordinates: <S, u> * <S, v> = <S, u ⧢ v>
+shuffleProduct(s1, s2, depth = 3)
+```
+
 ## Conventions
 
 - **Path layout.** `X` is a `T x d` numeric matrix: rows are ordered
@@ -116,8 +138,6 @@ signature(x, depth = 4)
 
 ## Roadmap
 
-- v0.4: `tensorProduct()`, `chenProduct()`, `shuffleProduct()`,
-  `tensorInverse()`, `visibilityTransform()`
 - v0.5: `logSignature()`
 - v1.0: stable API freeze
 

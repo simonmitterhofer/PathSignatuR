@@ -1,14 +1,16 @@
 Package: PathSignatuR
 Title: Path Signatures in R
-Version: 0.3.0
+Version: 0.4.0
 Authors@R: 
     person("Simon", "Mitterhofer", , "smh@quanticfinancial.com", role = c("aut", "cre"))
 Description: Truncated path signatures (exact piecewise-linear) for
     multi-dimensional discrete paths. Provides an Rcpp kernel based on
     segment-wise tensor exponentials and Chen products, a pure-R
     reference for verification, path transforms (time augmentation,
-    basepoint augmentation, lead-lag, interpolation), and word
-    enumeration utilities aligned with standard signature conventions.
+    basepoint augmentation, lead-lag, interpolation), tensor algebra
+    primitives (tensor product, tensor inverse, shuffle product, Chen
+    product), and word enumeration utilities aligned with standard
+    signature conventions.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

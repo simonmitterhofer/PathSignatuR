@@ -13,3 +13,19 @@ sig_path_cpp <- function(path, N) {
     .Call(`_PathSignatuR_sig_path_cpp`, path, N)
 }
 
+build_sig_workspace <- function(d, N) {
+    .Call(`_PathSignatuR_build_sig_workspace`, d, N)
+}
+
+tensor_product_cpp <- function(a, b, ws_xptr) {
+    .Call(`_PathSignatuR_tensor_product_cpp`, a, b, ws_xptr)
+}
+
+build_shuffle_workspace <- function(d, N) {
+    .Call(`_PathSignatuR_build_shuffle_workspace`, d, N)
+}
+
+shuffle_product_cpp <- function(a, b, ws_xptr) {
+    .Call(`_PathSignatuR_shuffle_product_cpp`, a, b, ws_xptr)
+}
+

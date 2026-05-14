@@ -253,3 +253,192 @@ NumericMatrix sig_path_cpp(const NumericMatrix& path, int N) {
   }
   return out;
 }
+
+// =====================================================================
+// Workspace handle for callers that want to amortize make_workspace cost.
+// Returned as an Rcpp::XPtr that R can cache; finalizer frees on GC.
+// =====================================================================
+
+// [[Rcpp::export]]
+SEXP build_sig_workspace(int d, int N) {
+  if (d < 1) Rcpp::stop("d must be at least 1");
+  if (N < 0) Rcpp::stop("N must be non-negative");
+  SigWorkspace* ws = new SigWorkspace(make_workspace(d, N));
+  return Rcpp::XPtr<SigWorkspace>(ws, true);
+}
+
+// =====================================================================
+// Exported: tensor_product_cpp -- truncated tensor product.
+//
+// Math: (a (x) b)[w] = sum over splits w = u.v of a[u] * b[v].
+// This is the same sum chen_product already computes; we expose it as
+// a standalone primitive over arbitrary inputs.
+// =====================================================================
+
+// [[Rcpp::export]]
+NumericVector tensor_product_cpp(const NumericVector& a,
+                                 const NumericVector& b,
+                                 SEXP ws_xptr) {
+  Rcpp::XPtr<SigWorkspace> ws(ws_xptr);
+  const int nWords = ws->nWords;
+  if ((int) a.size() != nWords) {
+    Rcpp::stop("`a` length %d does not match workspace nWords %d",
+               (int) a.size(), nWords);
+  }
+  if ((int) b.size() != nWords) {
+    Rcpp::stop("`b` length %d does not match workspace nWords %d",
+               (int) b.size(), nWords);
+  }
+  std::vector<double> aVec(a.begin(), a.end());
+  std::vector<double> bVec(b.begin(), b.end());
+  std::vector<double> out(nWords);
+  chen_product(aVec, bVec, *ws, out);
+  return NumericVector(out.begin(), out.end());
+}
+
+// =====================================================================
+// Shuffle product: separate workspace, its own cache.
+// =====================================================================
+
+struct ShuffleWorkspace {
+  int d;
+  int N;
+  int nWords;
+  std::vector<int> wordLen;
+  std::vector<int> shuffleOff;
+  std::vector<int> shuffleUPos;
+  std::vector<int> shuffleVPos;
+};
+
+static ShuffleWorkspace make_shuffle_workspace(int d, int N) {
+  ShuffleWorkspace ws;
+  ws.d = d; ws.N = N;
+
+  long long nWordsLL = 0, dk = 1;
+  for (int k = 0; k <= N; ++k) {
+    nWordsLL += dk;
+    if (nWordsLL > (long long) INT_MAX) {
+      Rcpp::stop("signature size overflows int (d=%d, N=%d)", d, N);
+    }
+    dk *= d;
+  }
+  ws.nWords = (int) nWordsLL;
+  ws.wordLen.assign(ws.nWords, 0);
+
+  if (N == 0) {
+    ws.shuffleOff  = {0, 1};
+    ws.shuffleUPos = {0};
+    ws.shuffleVPos = {0};
+    return ws;
+  }
+
+  std::vector<int> parentPos(ws.nWords), lastLetter(ws.nWords);
+  parentPos[0] = -1; lastLetter[0] = -1;
+  for (int w = 1; w < ws.nWords; ++w) {
+    parentPos[w]  = (w - 1) / d;
+    lastLetter[w] = (w - 1) % d;
+    ws.wordLen[w] = ws.wordLen[parentPos[w]] + 1;
+  }
+
+  std::vector<int> letterOff(ws.nWords + 1);
+  letterOff[0] = 0;
+  for (int w = 0; w < ws.nWords; ++w)
+    letterOff[w + 1] = letterOff[w] + ws.wordLen[w];
+  std::vector<int> letters(letterOff[ws.nWords]);
+  for (int w = 1; w < ws.nWords; ++w) {
+    const int p = parentPos[w];
+    const int k = ws.wordLen[w];
+    for (int i = 0; i < k - 1; ++i)
+      letters[letterOff[w] + i] = letters[letterOff[p] + i];
+    letters[letterOff[w] + k - 1] = lastLetter[w];
+  }
+
+  auto wordPos = [d](const int* L, int k) -> int {
+    if (k == 0) return 0;
+    long long cumLevel;
+    if (d == 1) {
+      cumLevel = k;
+    } else {
+      long long pk = 1;
+      for (int i = 0; i < k; ++i) pk *= d;
+      cumLevel = (pk - 1) / (d - 1);
+    }
+    long long offset = 0, power = 1;
+    for (int m = k - 1; m >= 0; --m) {
+      offset += L[m] * power;
+      power  *= d;
+    }
+    return (int)(cumLevel + offset);
+  };
+
+  ws.shuffleOff.resize(ws.nWords + 1);
+  ws.shuffleOff[0] = 0;
+  for (int w = 0; w < ws.nWords; ++w)
+    ws.shuffleOff[w + 1] = ws.shuffleOff[w] + (1 << ws.wordLen[w]);
+  const int total = ws.shuffleOff[ws.nWords];
+  ws.shuffleUPos.resize(total);
+  ws.shuffleVPos.resize(total);
+
+  std::vector<int> uLet, vLet;
+  for (int w = 0; w < ws.nWords; ++w) {
+    const int k = ws.wordLen[w];
+    const int* L = &letters[letterOff[w]];
+    const int base = ws.shuffleOff[w];
+    const int numSubsets = 1 << k;
+    for (int mask = 0; mask < numSubsets; ++mask) {
+      uLet.clear(); vLet.clear();
+      for (int i = 0; i < k; ++i) {
+        if (mask & (1 << i)) uLet.push_back(L[i]);
+        else                 vLet.push_back(L[i]);
+      }
+      ws.shuffleUPos[base + mask] = wordPos(uLet.data(), (int) uLet.size());
+      ws.shuffleVPos[base + mask] = wordPos(vLet.data(), (int) vLet.size());
+    }
+  }
+  return ws;
+}
+
+static inline void shuffle_product(
+    const std::vector<double>& a,
+    const std::vector<double>& b,
+    const ShuffleWorkspace& ws,
+    std::vector<double>& out)
+{
+  for (int w = 0; w < ws.nWords; ++w) {
+    const int s = ws.shuffleOff[w], e = ws.shuffleOff[w + 1];
+    double acc = 0.0;
+    for (int i = s; i < e; ++i) {
+      acc += a[ws.shuffleUPos[i]] * b[ws.shuffleVPos[i]];
+    }
+    out[w] = acc;
+  }
+}
+
+// [[Rcpp::export]]
+SEXP build_shuffle_workspace(int d, int N) {
+  if (d < 1) Rcpp::stop("d must be at least 1");
+  if (N < 0) Rcpp::stop("N must be non-negative");
+  ShuffleWorkspace* ws = new ShuffleWorkspace(make_shuffle_workspace(d, N));
+  return Rcpp::XPtr<ShuffleWorkspace>(ws, true);
+}
+
+// [[Rcpp::export]]
+NumericVector shuffle_product_cpp(const NumericVector& a,
+                                  const NumericVector& b,
+                                  SEXP ws_xptr) {
+  Rcpp::XPtr<ShuffleWorkspace> ws(ws_xptr);
+  const int nWords = ws->nWords;
+  if ((int) a.size() != nWords) {
+    Rcpp::stop("`a` length %d does not match workspace nWords %d",
+               (int) a.size(), nWords);
+  }
+  if ((int) b.size() != nWords) {
+    Rcpp::stop("`b` length %d does not match workspace nWords %d",
+               (int) b.size(), nWords);
+  }
+  std::vector<double> aVec(a.begin(), a.end());
+  std::vector<double> bVec(b.begin(), b.end());
+  std::vector<double> out(nWords);
+  shuffle_product(aVec, bVec, *ws, out);
+  return NumericVector(out.begin(), out.end());
+}

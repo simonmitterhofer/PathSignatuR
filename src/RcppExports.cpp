@@ -46,11 +46,65 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// build_sig_workspace
+SEXP build_sig_workspace(int d, int N);
+RcppExport SEXP _PathSignatuR_build_sig_workspace(SEXP dSEXP, SEXP NSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type d(dSEXP);
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    rcpp_result_gen = Rcpp::wrap(build_sig_workspace(d, N));
+    return rcpp_result_gen;
+END_RCPP
+}
+// tensor_product_cpp
+NumericVector tensor_product_cpp(const NumericVector& a, const NumericVector& b, SEXP ws_xptr);
+RcppExport SEXP _PathSignatuR_tensor_product_cpp(SEXP aSEXP, SEXP bSEXP, SEXP ws_xptrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericVector& >::type a(aSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type b(bSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type ws_xptr(ws_xptrSEXP);
+    rcpp_result_gen = Rcpp::wrap(tensor_product_cpp(a, b, ws_xptr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// build_shuffle_workspace
+SEXP build_shuffle_workspace(int d, int N);
+RcppExport SEXP _PathSignatuR_build_shuffle_workspace(SEXP dSEXP, SEXP NSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type d(dSEXP);
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    rcpp_result_gen = Rcpp::wrap(build_shuffle_workspace(d, N));
+    return rcpp_result_gen;
+END_RCPP
+}
+// shuffle_product_cpp
+NumericVector shuffle_product_cpp(const NumericVector& a, const NumericVector& b, SEXP ws_xptr);
+RcppExport SEXP _PathSignatuR_shuffle_product_cpp(SEXP aSEXP, SEXP bSEXP, SEXP ws_xptrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericVector& >::type a(aSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type b(bSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type ws_xptr(ws_xptrSEXP);
+    rcpp_result_gen = Rcpp::wrap(shuffle_product_cpp(a, b, ws_xptr));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_PathSignatuR_sig_terminal_cpp", (DL_FUNC) &_PathSignatuR_sig_terminal_cpp, 2},
     {"_PathSignatuR_sig_batch_cpp", (DL_FUNC) &_PathSignatuR_sig_batch_cpp, 2},
     {"_PathSignatuR_sig_path_cpp", (DL_FUNC) &_PathSignatuR_sig_path_cpp, 2},
+    {"_PathSignatuR_build_sig_workspace", (DL_FUNC) &_PathSignatuR_build_sig_workspace, 2},
+    {"_PathSignatuR_tensor_product_cpp", (DL_FUNC) &_PathSignatuR_tensor_product_cpp, 3},
+    {"_PathSignatuR_build_shuffle_workspace", (DL_FUNC) &_PathSignatuR_build_shuffle_workspace, 2},
+    {"_PathSignatuR_shuffle_product_cpp", (DL_FUNC) &_PathSignatuR_shuffle_product_cpp, 3},
     {NULL, NULL, 0}
 };
 

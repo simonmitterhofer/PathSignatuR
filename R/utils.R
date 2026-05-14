@@ -50,3 +50,48 @@
     if (length(w) == 0L) "" else paste(w, collapse = sep)
   }, character(1L))
 }
+
+#' Infer alphabet size d from a (d, depth) signature length.
+#' @keywords internal
+.inferDim <- function(L, depth) {
+  if (depth == 0L) {
+    if (L == 1L) return(1L)
+    stop(sprintf("length %d incompatible with depth 0 (expected 1)", L))
+  }
+  upper <- ceiling(L^(1 / depth)) + 1L
+  for (d in 1L:upper) {
+    if (sum(as.double(d)^(0:depth)) == L) return(d)
+  }
+  stop(sprintf("length %d is not sum(d^(0:%d)) for any integer d >= 1",
+               L, depth))
+}
+
+# Package-level cache of SigWorkspace XPtrs, keyed by "d.depth".
+# Per-session; refilled on demand by .getWorkspace().
+.workspaceCache <- new.env(parent = emptyenv())
+
+#' Get a cached SigWorkspace XPtr for the given (d, depth).
+#' @keywords internal
+.getWorkspace <- function(d, depth) {
+  key <- paste(d, depth, sep = ".")
+  ws  <- .workspaceCache[[key]]
+  if (is.null(ws)) {
+    ws <- build_sig_workspace(as.integer(d), as.integer(depth))
+    .workspaceCache[[key]] <- ws
+  }
+  ws
+}
+# Package-level cache of ShuffleWorkspace XPtrs.
+.shuffleCache <- new.env(parent = emptyenv())
+
+#' Get a cached ShuffleWorkspace XPtr for the given (d, depth).
+#' @keywords internal
+.getShuffleWorkspace <- function(d, depth) {
+  key <- paste(d, depth, sep = ".")
+  ws  <- .shuffleCache[[key]]
+  if (is.null(ws)) {
+    ws <- build_shuffle_workspace(as.integer(d), as.integer(depth))
+    .shuffleCache[[key]] <- ws
+  }
+  ws
+}

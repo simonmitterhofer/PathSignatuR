@@ -78,3 +78,88 @@
   }
   S
 }
+
+#' Pure-R reference truncated tensor product.
+#'
+#' For words w, `(a (x) b)[w] = sum over splits w = u.v of a[u] * b[v]`.
+#' Used in tests as the comparison baseline for the C++ kernel.
+#'
+#' @keywords internal
+.tensorProductRef <- function(a, b, depth) {
+  N <- .validateDepth(depth)
+  if (!is.numeric(a) || !is.numeric(b)) stop("`a` and `b` must be numeric")
+  if (length(a) != length(b)) stop("`a` and `b` must have equal length")
+  if (any(!is.finite(a)) || any(!is.finite(b))) {
+    stop("`a` and `b` must contain only finite values")
+  }
+  L <- length(a)
+  d <- .inferDim(L, N)
+
+  if (N == 0L) return(unname(a) * unname(b))
+
+  words <- enumerateWords(d, N)
+  wordPos <- function(letters) {
+    k <- length(letters)
+    if (k == 0L) return(1L)
+    if (d == 1L) return(k + 1L)
+    cumLevel <- (d^k - 1L) %/% (d - 1L)
+    as.integer(cumLevel + 1L + sum((letters - 1L) * d^((k - 1L):0L)))
+  }
+  out <- numeric(L)
+  for (wi in seq_len(L)) {
+    w <- words[[wi]]; k <- length(w)
+    if (k == 0L) { out[wi] <- a[1L] * b[1L]; next }
+    total <- 0
+    for (j in 0:k) {
+      pre <- if (j == 0L) integer(0) else w[1:j]
+      suf <- if (j == k) integer(0) else w[(j + 1L):k]
+      total <- total + a[wordPos(pre)] * b[wordPos(suf)]
+    }
+    out[wi] <- total
+  }
+  out
+}
+
+#' Pure-R reference shuffle product.
+#'
+#' For words `w` of length `k`, `(a ⧢ b)[w] = sum over subsets S of {1..k}
+#' of a[w|S] * b[w|S^c]`. Equivalently, sums over all `2^k` interleavings.
+#' Used in tests as the comparison baseline.
+#'
+#' @keywords internal
+.shuffleProductRef <- function(a, b, depth) {
+  N <- .validateDepth(depth)
+  if (!is.numeric(a) || !is.numeric(b)) stop("`a` and `b` must be numeric")
+  if (length(a) != length(b)) stop("`a` and `b` must have equal length")
+  if (any(!is.finite(a)) || any(!is.finite(b))) {
+    stop("`a` and `b` must contain only finite values")
+  }
+  L <- length(a)
+  d <- .inferDim(L, N)
+
+  if (N == 0L) return(unname(a) * unname(b))
+
+  words <- enumerateWords(d, N)
+  wordPos <- function(letters) {
+    k <- length(letters)
+    if (k == 0L) return(1L)
+    if (d == 1L) return(k + 1L)
+    cumLevel <- (d^k - 1L) %/% (d - 1L)
+    as.integer(cumLevel + 1L + sum((letters - 1L) * d^((k - 1L):0L)))
+  }
+
+  out <- numeric(L)
+  for (wi in seq_len(L)) {
+    w <- words[[wi]]; k <- length(w)
+    if (k == 0L) { out[wi] <- a[1L] * b[1L]; next }
+    total <- 0
+    for (mask in 0:(2^k - 1L)) {
+      bits <- as.logical(intToBits(mask)[1:k])
+      u <- w[bits]
+      v <- w[!bits]
+      total <- total + a[wordPos(u)] * b[wordPos(v)]
+    }
+    out[wi] <- total
+  }
+  out
+}
