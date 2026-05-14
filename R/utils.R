@@ -95,3 +95,32 @@
   }
   ws
 }
+
+# Package-level cache of Lyndon projection data, keyed by "d.N".
+.lyndonCache <- new.env(parent = emptyenv())
+
+#' Get cached Lyndon projection data for (d, depth).
+#'
+#' Returns a list with elements `words` (list of Lyndon-word integer
+#' vectors in canonical order), `M` (the tensor-basis bracket matrix,
+#' shape `sum(d^(0:depth)) x length(words)`), and `qr` (precomputed
+#' QR decomposition of `M`).
+#'
+#' @keywords internal
+.getLyndonProjection <- function(d, depth) {
+  key    <- paste(d, depth, sep = ".")
+  cached <- .lyndonCache[[key]]
+  if (is.null(cached)) {
+    words  <- lyndonWords(d, depth)
+    M      <- .lyndonProjectionMatrix(d, depth, words)
+    cached <- list(words = words, M = M, qr = qr(M))
+    .lyndonCache[[key]] <- cached
+  }
+  cached
+}
+
+#' Build Lyndon-word names with the given separator.
+#' @keywords internal
+.lyndonWordNames <- function(words, sep = ",") {
+  vapply(words, function(w) paste(w, collapse = sep), character(1L))
+}
