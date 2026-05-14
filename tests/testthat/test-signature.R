@@ -139,3 +139,20 @@ test_that("translation invariance: signature ignores path basepoint", {
                unname(signature(X + shift, depth = 3)),
                tolerance = TOL_STRICT)
 })
+
+test_that(".validatePath accepts a data.frame", {
+  df <- data.frame(a = 1:5, b = rnorm(5))
+  s  <- signature(df, depth = 2)
+  expect_length(s, 7L)
+})
+
+test_that(".validatePath rejects empty matrices (numeric(0))", {
+  expect_error(signature(numeric(0), 2), "at least one")
+})
+
+test_that(".validateDepth rejects non-numeric / NA / Inf depth", {
+  X <- matrix(rnorm(6), 3, 2)
+  expect_error(signature(X, "two"),    "finite non-negative")
+  expect_error(signature(X, NA_real_), "finite non-negative")
+  expect_error(signature(X, Inf),      "finite non-negative")
+})

@@ -97,3 +97,11 @@ test_that("invalid input errors cleanly", {
   expect_error(signatureBatch(list(matrix(NA_real_, 3, 2)), 2),
                "path 1:.*finite")
 })
+
+test_that("3D array rejects non-numeric / non-finite content", {
+  arr <- array(as.character(rnorm(60)), dim = c(10, 2, 3))
+  expect_error(signatureBatch(arr, 2), "numeric")
+  arr <- array(rnorm(60), dim = c(10, 2, 3))
+  arr[1, 1, 1] <- NA
+  expect_error(signatureBatch(arr, 2), "finite")
+})

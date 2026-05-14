@@ -7,7 +7,7 @@
 #'
 #' @param X a numeric matrix of shape `T x d` (rows = ordered observations,
 #'   columns = channels). A numeric vector is treated as a 1D path
-#'   (`T x 1`). Must be finite. v0.1 is single-path only.
+#'   (`T x 1`). Must be finite.
 #' @param depth non-negative integer truncation level. `depth = 0` returns
 #'   only the level-0 term (`1`).
 #' @param includeLevelZero if `TRUE` (default), the returned vector starts
@@ -22,7 +22,7 @@
 #'
 #' @section Time augmentation:
 #' `signature()` does not augment with time. To include time as a channel,
-#' pre-process with `timeAugment()` (coming next).
+#' pre-process with [timeAugment()].
 #'
 #' @section Note on name clash:
 #' `PathSignatuR::signature()` masks `methods::signature()` on attach.
@@ -39,13 +39,7 @@
 signature <- function(X, depth, includeLevelZero = TRUE, sep = ",") {
   X     <- .validatePath(X)
   depth <- .validateDepth(depth)
-  if (!is.character(sep) || length(sep) != 1L || is.na(sep)) {
-    stop("`sep` must be a single string")
-  }
-  if (!is.logical(includeLevelZero) || length(includeLevelZero) != 1L ||
-      is.na(includeLevelZero)) {
-    stop("`includeLevelZero` must be TRUE or FALSE")
-  }
+  .validateSignatureOptions(sep, includeLevelZero)
 
   d   <- ncol(X)
   out <- sig_terminal_cpp(X, depth)

@@ -18,7 +18,7 @@ under \code{scale = "unit"}, or \verb{0, 1, ..., T-1} under \code{scale = "none"
 }
 \value{
 a numeric matrix with \code{T} rows and \code{d + 1} columns. The first
-column is named \code{"time"}.
+column is named \code{"time"}; user channel names on \code{X} are stripped.
 }
 \description{
 Adds a time coordinate as the first column of the path. By default the
@@ -31,6 +31,6 @@ of differing length. Supply a custom grid via \code{time}, or use
 X <- matrix(rnorm(20), 10, 2)
 Xt <- timeAugment(X)
 colnames(Xt)
-#> "time" "" ""
+#> "time" NULL NULL  (only "time" is named)
 
 }

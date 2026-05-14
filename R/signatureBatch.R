@@ -32,16 +32,10 @@
 #' @seealso [signature()], [signaturePath()]
 #' @export
 signatureBatch <- function(X, depth, includeLevelZero = TRUE, sep = ",") {
-  depth <- .validateDepth(depth)
-  if (!is.character(sep) || length(sep) != 1L || is.na(sep)) {
-    stop("`sep` must be a single string")
-  }
-  if (!is.logical(includeLevelZero) || length(includeLevelZero) != 1L ||
-      is.na(includeLevelZero)) {
-    stop("`includeLevelZero` must be TRUE or FALSE")
-  }
+  paths     <- .toPathList(X)
+  depth     <- .validateDepth(depth)
+  .validateSignatureOptions(sep, includeLevelZero)
 
-  paths    <- .toPathList(X)
   pathNames <- names(paths)
   if (length(paths) < 1L) stop("`X` must contain at least one path")
 

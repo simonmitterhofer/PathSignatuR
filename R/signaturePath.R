@@ -30,13 +30,7 @@
 signaturePath <- function(X, depth, includeLevelZero = TRUE, sep = ",") {
   X     <- .validatePath(X)
   depth <- .validateDepth(depth)
-  if (!is.character(sep) || length(sep) != 1L || is.na(sep)) {
-    stop("`sep` must be a single string")
-  }
-  if (!is.logical(includeLevelZero) || length(includeLevelZero) != 1L ||
-      is.na(includeLevelZero)) {
-    stop("`includeLevelZero` must be TRUE or FALSE")
-  }
+  .validateSignatureOptions(sep, includeLevelZero)
 
   d   <- ncol(X)
   out <- sig_path_cpp(X, depth)

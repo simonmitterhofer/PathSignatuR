@@ -9,7 +9,7 @@ signature(X, depth, includeLevelZero = TRUE, sep = ",")
 \arguments{
 \item{X}{a numeric matrix of shape \verb{T x d} (rows = ordered observations,
 columns = channels). A numeric vector is treated as a 1D path
-(\verb{T x 1}). Must be finite. v0.1 is single-path only.}
+(\verb{T x 1}). Must be finite.}
 
 \item{depth}{non-negative integer truncation level. \code{depth = 0} returns
 only the level-0 term (\code{1}).}
@@ -35,7 +35,7 @@ tensor exponentials and Chen products), so closed forms such as
 \section{Time augmentation}{
 
 \code{signature()} does not augment with time. To include time as a channel,
-pre-process with \code{timeAugment()} (coming next).
+pre-process with \code{\link[=timeAugment]{timeAugment()}}.
 }
 
 \section{Note on name clash}{

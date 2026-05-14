@@ -44,31 +44,55 @@ enumerateWords(dim = 2, depth = 2)
 ## Batch and path-valued variants
 
 ```r
-   # Many paths at once — precompute is shared across the batch
-   paths <- list(
-     a = matrix(rnorm(40), 20, 2),
-     b = matrix(rnorm(60), 30, 2),
-     c = matrix(rnorm(50), 25, 2)
-   )
-   signatureBatch(paths, depth = 2)         # 3 x 7 matrix, row names a/b/c
+# Many paths at once — precompute is shared across the batch
+paths <- list(
+  a = matrix(rnorm(40), 20, 2),
+  b = matrix(rnorm(60), 30, 2),
+  c = matrix(rnorm(50), 25, 2)
+)
+signatureBatch(paths, depth = 2)         # 3 x 7 matrix, row names a/b/c
 
-   # Running signature at every time step
-   sp <- signaturePath(X, depth = 2)        # T x 7 matrix
-   sp[1, ]                                  # identity (1, 0, ..., 0)
-   sp[nrow(sp), ]                           # same as signature(X, 2)
+# Running signature at every time step
+sp <- signaturePath(X, depth = 2)        # T x 7 matrix
+sp[1, ]                                  # identity (1, 0, ..., 0)
+sp[nrow(sp), ]                           # same as signature(X, 2)
+```
+
+## Path transforms
+
+All transforms are path-in / path-out and compose cleanly with
+`signature()` and friends.
+
+```r
+# Time augmentation: prepend a time channel (default unit-scaled to [0, 1])
+timeAugment(X)
+
+# Basepoint augmentation: prepend a reference point (default origin) to
+# break translation invariance. Usually unnecessary for log-return work.
+basepointAugment(X)
+
+# Lead-lag (FHL): doubles channels into lead/lag copies. Level-2 cross-
+# term S^{lead_i, lag_i} - S^{lag_i, lead_i} recovers the quadratic
+# variation of channel i.
+leadLag(X)
+
+# Path interpolation: resample to a new grid (linear by default; "step"
+# for left-continuous piecewise-constant). No splines by design --
+# would break piecewise-linearity.
+pathInterpolate(X, n = 50)
+pathInterpolate(X, at = c(0, 0.25, 0.5, 0.75, 1))
 ```
 
 ## Conventions
 
 - **Path layout.** `X` is a `T x d` numeric matrix: rows are ordered
   observations, columns are channels. A numeric vector is treated as a
-  1D path. v0.1 is single-path only.
+  1D path.
 - **Word ordering.** Level-major, lexicographic within level (last
   letter varies fastest). The empty word sits at position 1.
-- **Output.** `signature()` returns the **terminal** value of the
-  truncated signature as a named numeric vector. The full path-valued
-  signature is computed internally; an exported `signaturePath()` is
-  on the v0.2 roadmap.
+- **Output.** `signature()` returns the terminal value of the truncated
+  signature as a named numeric vector. `signaturePath()` returns the
+  full running signature; `signatureBatch()` does many paths at once.
 - **Time.** Not automatic. Use `timeAugment()` explicitly when you want
   a time channel.
 - **Names.** Default `sep = ","` (`"1,1"`, `"1,2"`, ...). For
@@ -92,11 +116,10 @@ signature(x, depth = 4)
 
 ## Roadmap
 
-- v0.2: `signatureBatch()`, `signaturePath()`
-- v0.3: `leadLag()`, `basepointAugment()`, `visibilityTransform()`,
-  `pathInterpolate()`
-- v0.4: `tensorProduct()`, `chenProduct()`, `shuffleProduct()`
+- v0.4: `tensorProduct()`, `chenProduct()`, `shuffleProduct()`,
+  `tensorInverse()`, `visibilityTransform()`
 - v0.5: `logSignature()`
+- v1.0: stable API freeze
 
 ## License
 

@@ -28,6 +28,19 @@
   as.integer(depth)
 }
 
+#' Validate the shared `sep` / `includeLevelZero` options.
+#' @keywords internal
+.validateSignatureOptions <- function(sep, includeLevelZero) {
+  if (!is.character(sep) || length(sep) != 1L || is.na(sep)) {
+    stop("`sep` must be a single string")
+  }
+  if (!is.logical(includeLevelZero) || length(includeLevelZero) != 1L ||
+      is.na(includeLevelZero)) {
+    stop("`includeLevelZero` must be TRUE or FALSE")
+  }
+  invisible(NULL)
+}
+
 #' Build the names vector for a (d, depth) signature.
 #' Empty word -> "", otherwise letters joined by `sep`.
 #' @keywords internal

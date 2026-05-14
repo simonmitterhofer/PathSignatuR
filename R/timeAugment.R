@@ -14,19 +14,19 @@
 #'   `"none"` (keep `time` as-is).
 #'
 #' @return a numeric matrix with `T` rows and `d + 1` columns. The first
-#'   column is named `"time"`.
+#'   column is named `"time"`; user channel names on `X` are stripped.
 #'
 #' @examples
 #' X <- matrix(rnorm(20), 10, 2)
 #' Xt <- timeAugment(X)
 #' colnames(Xt)
-#' #> "time" "" ""
+#' #> "time" NULL NULL  (only "time" is named)
 #'
 #' @export
 timeAugment <- function(X, time = NULL, scale = c("unit", "none")) {
-  X <- .validatePath(X)
+  X     <- .validatePath(X)
   scale <- match.arg(scale)
-  tLen <- nrow(X)
+  tLen  <- nrow(X)
 
   if (is.null(time)) {
     tCol <- if (scale == "unit") {
@@ -48,7 +48,7 @@ timeAugment <- function(X, time = NULL, scale = c("unit", "none")) {
     }
   }
 
-  out <- cbind(time = tCol, X)
-  colnames(out)[-1L] <- ""        # don't propagate user channel names
+  out <- cbind(tCol, X, deparse.level = 0)
+  colnames(out) <- c("time", rep("", ncol(X)))
   out
 }

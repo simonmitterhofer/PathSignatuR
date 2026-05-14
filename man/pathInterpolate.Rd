@@ -4,7 +4,7 @@
 \alias{pathInterpolate}
 \title{Resample a path to a new time grid}
 \usage{
-pathInterpolate(X, n = NULL, time = NULL, method = c("linear", "step"))
+pathInterpolate(X, n = NULL, at = NULL, method = c("linear", "step"))
 }
 \arguments{
 \item{X}{numeric matrix (T x d, with T >= 2) or vector (treated as
@@ -12,25 +12,25 @@ a 1D path). Single-row paths are rejected: there is nothing to
 interpolate between.}
 
 \item{n}{positive integer. Number of equispaced points to produce
-on \verb{[0, 1]}. Exactly one of \code{n} or \code{time} must be supplied.}
+on \verb{[0, 1]}. Exactly one of \code{n} or \code{at} must be supplied.}
 
-\item{time}{numeric vector of target times. Must be finite,
-non-decreasing, and contained in \verb{[0, 1]} (up to a tolerance of
-\code{1e-10}).}
+\item{at}{numeric vector of target times to interpolate at. Must be
+finite, non-decreasing, and contained in \verb{[0, 1]} (up to a
+tolerance of \code{1e-10}).}
 
 \item{method}{one of \code{"linear"} (default) or \code{"step"}. \code{"step"} is
 piecewise-constant left-continuous: the value at time \code{t} is
 \code{X[s, ]} for the largest source time \code{s <= t}.}
 }
 \value{
-a numeric matrix of shape \verb{n x d} (or \verb{length(time) x d}).
+a numeric matrix of shape \verb{n x d} (or \verb{length(at) x d}).
 Dimnames are stripped.
 }
 \description{
 Interpolates \code{X} onto a new grid, preserving piecewise-linearity so
 the result composes cleanly with \code{\link[=signature]{signature()}} and friends. The
 source path is treated as living on \code{seq(0, 1, length.out = T)};
-supply either \code{n} for a uniform regrid or \code{time} for an explicit
+supply either \code{n} for a uniform regrid or \code{at} for an explicit
 target grid.
 }
 \section{No splines}{
@@ -57,7 +57,7 @@ X <- matrix(cumsum(rnorm(60)), 30, 2)
 pathInterpolate(X, n = 50)
 
 # Custom target grid
-pathInterpolate(X, time = c(0, 0.25, 0.5, 0.75, 1))
+pathInterpolate(X, at = c(0, 0.25, 0.5, 0.75, 1))
 
 # Step interpolation
 pathInterpolate(X, n = 100, method = "step")

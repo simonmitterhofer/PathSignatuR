@@ -56,3 +56,10 @@ test_that("integration: signature on augmented path has (d+1)-channel size", {
   X <- makeRandomPath(50, 2, seed = 5)
   expect_length(signature(timeAugment(X), depth = 2), 1 + 3 + 9)
 })
+
+test_that("T = 1 input is handled (unit scale gives time = 0)", {
+  X  <- matrix(c(0.3, -0.1), 1, 2)
+  Xt <- timeAugment(X)
+  expect_equal(dim(Xt), c(1L, 3L))
+  expect_equal(unname(Xt[1, 1]), 0)
+})

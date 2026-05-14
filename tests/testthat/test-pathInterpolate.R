@@ -40,7 +40,7 @@ test_that("step interpolation preserves the endpoint", {
 
 test_that("explicit time grid is honored", {
   X <- makeRandomPath(10, 2, seed = 4)
-  Y <- pathInterpolate(X, time = c(0, 0.5, 1))
+  Y <- pathInterpolate(X, at = c(0, 0.5, 1))
   expect_equal(dim(Y), c(3L, 2L))
   expect_equal(Y[1, ], X[1, ],       tolerance = TOL_STRICT)
   expect_equal(Y[3, ], X[nrow(X), ], tolerance = TOL_STRICT)
@@ -49,7 +49,7 @@ test_that("explicit time grid is honored", {
 test_that("explicit time at source-grid points reproduces source rows", {
   X   <- makeRandomPath(11, 2, seed = 5)
   src <- seq(0, 1, length.out = 11)
-  Y   <- pathInterpolate(X, time = src)
+  Y   <- pathInterpolate(X, at = src)
   expect_equal(unname(Y), unname(X), tolerance = TOL_STRICT)
 })
 
@@ -93,7 +93,7 @@ test_that("signature is invariant under regridding that preserves source knots",
   insert <- seq(0, 1, length.out = 10)[-c(1, 10)]
   target <- sort(unique(c(src, as.vector(outer(insert / (length(src) - 1),
                                                head(src, -1), `+`)))))
-  Y <- pathInterpolate(X, time = target)
+  Y <- pathInterpolate(X, at = target)
   expect_equal(unname(signature(X, depth = 3)),
                unname(signature(Y, depth = 3)),
                tolerance = TOL_DEFAULT)
@@ -124,15 +124,15 @@ test_that("invalid inputs are rejected", {
   X <- makeRandomPath(10, 2, seed = 8)
   expect_error(pathInterpolate(matrix(1, 1, 2), n = 10), "at least 2")
   expect_error(pathInterpolate(X),                       "exactly one")
-  expect_error(pathInterpolate(X, n = 10, time = c(0, 1)), "not both")
+  expect_error(pathInterpolate(X, n = 10, at = c(0, 1)), "not both")
   expect_error(pathInterpolate(X, n = 0),                "positive")
   expect_error(pathInterpolate(X, n = -3),               "positive")
   expect_error(pathInterpolate(X, n = 1.5),              "positive")
-  expect_error(pathInterpolate(X, time = c(0, -0.1)),    "\\[0, 1\\]")
-  expect_error(pathInterpolate(X, time = c(0, 1.5)),     "\\[0, 1\\]")
-  expect_error(pathInterpolate(X, time = c(0.5, 0.2)),   "non-decreasing")
-  expect_error(pathInterpolate(X, time = c(0, NA, 1)),   "finite")
-  expect_error(pathInterpolate(X, time = numeric(0)),    "length at least 1")
+  expect_error(pathInterpolate(X, at = c(0, -0.1)),    "\\[0, 1\\]")
+  expect_error(pathInterpolate(X, at = c(0, 1.5)),     "\\[0, 1\\]")
+  expect_error(pathInterpolate(X, at = c(0.5, 0.2)),   "non-decreasing")
+  expect_error(pathInterpolate(X, at = c(0, NA, 1)),   "finite")
+  expect_error(pathInterpolate(X, at = numeric(0)),    "length at least 1")
   expect_error(pathInterpolate(X, n = 10, method = "spline"))
 })
 
@@ -140,7 +140,13 @@ test_that("non-strict monotonic time is allowed (repeated times OK)", {
   # We required non-decreasing, not strictly increasing. Repeats produce
   # duplicate rows, which is harmless for the signature.
   X <- makeRandomPath(10, 2, seed = 9)
-  Y <- pathInterpolate(X, time = c(0, 0.5, 0.5, 1))
+  Y <- pathInterpolate(X, at = c(0, 0.5, 0.5, 1))
   expect_equal(dim(Y), c(4L, 2L))
   expect_equal(Y[2, ], Y[3, ], tolerance = TOL_STRICT)
+})
+
+test_that("`at` rejects non-numeric input", {
+  X <- makeRandomPath(10, 2, seed = 1)
+  expect_error(pathInterpolate(X, at = "0.5"),       "numeric vector")
+  expect_error(pathInterpolate(X, at = list(0, 1)),  "numeric vector")
 })
